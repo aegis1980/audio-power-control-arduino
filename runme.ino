@@ -64,6 +64,7 @@ void loop()
     if (_onoff == LOW){
       // Turn off/by-pass control function
       digitalWrite(_relayControlPin, HIGH); //open relay
+      _lastRelayChangeTime = millis();
       _oldStatus = STATUS_UNDEFINED;
       digitalWrite(_greenPin, LOW);
       digitalWrite(_redPin,LOW);
@@ -72,8 +73,6 @@ void loop()
     //read enveloped sound value on soundPin
   if (millis() - _lastRelayChangeTime >=  AFTER_RELAY_CHANGE_DELAY && _onoff == HIGH){
     val = analogRead(_aSoundPin);
-    //int val2 = analogRead(_bSoundPin);
-    //val = max(val1,val2);  // values on each input pin (L & R channels)
 
     if (val>SILENCE_THRESHOLD){
         _lastNotSilentTime = millis();
