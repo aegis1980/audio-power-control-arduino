@@ -25,7 +25,7 @@ const int _greenPin = 5;
 
 const int _relayControlPin = 2;
 const int SILENCE_THRESHOLD = 5;
-const long SILENCE_TIME_TO_TRIGGER_POWEROFF = 1000*20; // 20 secs of silence 
+const long SILENCE_TIME_TO_TRIGGER_POWEROFF = 1000*10; // 10 secs of silence turns off amp
 const long TIME_TO_TRIGGER_SILENCE = 1000;
 const long AFTER_RELAY_CHANGE_DELAY = 300; //ms. To address noisy ground relay seems to cause.
 
