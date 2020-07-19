@@ -1,16 +1,33 @@
 
+/*
+* 2020 Jon Robinson 
+* MIT License
+* Arduino sketch which using envelope/peak detector circuit output signal to detect if music playing.
+* Opens/ closes a relay accordingly - relay intended to switch amp on and off.
+*/
 
+// Two analog pins connected to envelope detector circuits
+// one for left channel, one for right channel
 int _aSoundPin = A5;
-int val = 0;  // variable to store the value read 
 
-const int _onoffPin = 3;
-const int _redPin= 4;
+int val = 0;  // variable to store the signal read from pins 
+
+const int _onoffPin = 7; // manual switch to turn function on and off
+
+/*
+* LED show status:
+* - green only: music playing (relay closed)
+* - red only: no music (relay open)
+* - green and red: no musuc playing, will open relay in X seconds unless music detected again
+*/
+const int _redPin= 4; 
 const int _greenPin = 5;
-const int _relayControlPin = 2;
 
-const long SILENCE_TIME_TO_TRIGGER_POWEROFF = 1000*20;
+const int _relayControlPin = 2;
+const int SILENCE_THRESHOLD = 5;
+const long SILENCE_TIME_TO_TRIGGER_POWEROFF = 1000*20; // 20 secs of silence 
 const long TIME_TO_TRIGGER_SILENCE = 1000;
-const long AFTER_RELAY_CHANGE_DELAY = 100; //ms. To address noisy ground relay seems to cause.
+const long AFTER_RELAY_CHANGE_DELAY = 300; //ms. To address noisy ground relay seems to cause.
 
 const int STATUS_MUSIC = 0;
 const int STATUS_SILENCE = 1;
@@ -29,8 +46,9 @@ unsigned long _lastRelayChangeTime = 0;
 
 void setup()
 {
+ // Serial.begin(9600);
+    pinMode(_onoffPin,INPUT_PULLUP);
 
-    pinMode(_onoffPin,INPUT);
     // rgb led
     pinMode(_redPin, OUTPUT);
     pinMode(_greenPin, OUTPUT);
@@ -41,21 +59,26 @@ void setup()
 }
 void loop()
 {
-  //_onoff = digitalRead(_onoffPin);
-  
-  _onoff = HIGH;
-  if (_onoff == LOW){
-    digitalWrite(_relayControlPin, HIGH); //open relay
-    _oldStatus = STATUS_UNDEFINED;
-  } 
+    _onoff = digitalRead(_onoffPin);
+
+    if (_onoff == LOW){
+      // Turn off/by-pass control function
+      digitalWrite(_relayControlPin, HIGH); //open relay
+      _oldStatus = STATUS_UNDEFINED;
+      digitalWrite(_greenPin, LOW);
+      digitalWrite(_redPin,LOW);
+    } 
 
     //read enveloped sound value on soundPin
   if (millis() - _lastRelayChangeTime >=  AFTER_RELAY_CHANGE_DELAY && _onoff == HIGH){
-    val = analogRead(_aSoundPin);  // read the input pin
-    if (val>0){
+    val = analogRead(_aSoundPin);
+    //int val2 = analogRead(_bSoundPin);
+    //val = max(val1,val2);  // values on each input pin (L & R channels)
+
+    if (val>SILENCE_THRESHOLD){
         _lastNotSilentTime = millis();
         _status = STATUS_MUSIC;         // debug value
-    } else if (val == 0) {
+    } else {
         if (_status==STATUS_MUSIC){
           unsigned long dt = millis() - _lastNotSilentTime;
           if (dt >= TIME_TO_TRIGGER_SILENCE) {
